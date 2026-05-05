@@ -1,16 +1,60 @@
-# React + Vite
+# ShopVault - Premium Product Listing Interface
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+ShopVault is a premium e-commerce product listing interface built with React and Vite. It fetches and displays random product data from FreeAPI in a structured, modern layout with advanced features like filtering, sorting, and pagination.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Product Grid**: Responsive 3-column grid with animated card entry and hover transformations.
+- **Rich Product Cards**: Displays thumbnail, brand, title, description, pricing (current and original), star rating, stock indicator bar, discount, and category badges.
+- **Real-time Search**: Search across product titles, brands, and descriptions seamlessly.
+- **Dynamic Category Filters**: Filter chips are dynamically generated based on available product categories.
+- **Sorting Mechanisms**: Sort products by price (low to high, high to low), rating, or biggest discount.
+- **Pagination**: Easy navigation with smooth scroll-to-top functionality.
+- **Product Detail Modal**: A full image gallery with navigation arrows and dots, accompanied by detailed product metadata.
+- **Robust Loading & Error States**: Features shimmer skeleton cards during data fetching and a friendly empty state when no products match filters.
+- **Premium Design**: Dark theme with a purple accent gradient, glassmorphism UI elements, ambient background glow, and micro-animations for an exceptional user experience.
 
-## React Compiler
+## 🚀 Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Core**: React 19, Vite
+- **Styling**: Vanilla CSS (Custom Design System with CSS variables)
+- **Data Source**: [FreeAPI - Random Products Endpoint](https://api.freeapi.app/api/v1/public/randomproducts)
+- **Typography**: Inter (Google Fonts)
 
-## Expanding the ESLint configuration
+## 📦 Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+
+Make sure you have Node.js and npm (or pnpm/yarn) installed on your system.
+
+### Installation
+
+1. Clone the repository or navigate to the project directory:
+   ```bash
+   cd "FreeAPI Product Listing Interface"
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open your browser and navigate to the URL provided in the terminal (usually `http://localhost:5173/`).
+
+## 🛠️ Project Structure
+
+- `src/App.jsx`: Main React component handling state, API fetching, filtering logic, and rendering the UI components (ProductCard, ProductModal, SkeletonGrid).
+- `src/App.css`: Component-specific styles for cards, modals, toolbar, pagination, and responsive breakpoints.
+- `src/index.css`: Global design system variables (colors, typography, spacing) and base styles including ambient background effects.
+- `src/main.jsx`: React entry point.
+- `index.html`: Main HTML file with SEO meta tags and font imports.
+
+## 📝 Acknowledgements
+
+- Data provided by [FreeAPI](https://freeapi.app).
+- Design inspiration drawn from modern, premium e-commerce platforms and web design trends.
