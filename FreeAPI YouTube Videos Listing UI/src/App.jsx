@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react'
 import './App.css'
 
 const API_URL = 'https://api.freeapi.app/api/v1/public/youtube/videos'
+const DEFAULT_PAGE = 1
+
+function buildApiUrl(page) {
+  const url = new URL(API_URL)
+  url.searchParams.set('page', String(page))
+  return url.toString()
+}
 
 function formatCompactNumber(value) {
   const numericValue = Number(value)
@@ -110,6 +117,7 @@ function VideoCard({ video, featured = false }) {
 function App() {
   const [videos, setVideos] = useState([])
   const [pageInfo, setPageInfo] = useState(null)
+  const [page, setPage] = useState(DEFAULT_PAGE)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -121,7 +129,7 @@ function App() {
         setLoading(true)
         setError('')
 
-        const response = await fetch(API_URL, { signal: controller.signal })
+        const response = await fetch(buildApiUrl(page), { signal: controller.signal })
 
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`)
@@ -145,10 +153,24 @@ function App() {
     loadVideos()
 
     return () => controller.abort()
-  }, [])
+  }, [page])
 
   const featuredVideo = videos[0]
   const queueVideos = videos.slice(1)
+  const currentPage = pageInfo?.page ?? page
+  const totalPages = pageInfo?.totalPages ?? 0
+  const canGoPrevious = !loading && Boolean(pageInfo?.previousPage)
+  const canGoNext = !loading && Boolean(pageInfo?.nextPage)
+  const goToPreviousPage = () => {
+    if (canGoPrevious) {
+      setPage((currentPageNumber) => Math.max(DEFAULT_PAGE, currentPageNumber - 1))
+    }
+  }
+  const goToNextPage = () => {
+    if (canGoNext) {
+      setPage((currentPageNumber) => currentPageNumber + 1)
+    }
+  }
 
   return (
     <main className="page-shell">
@@ -180,11 +202,11 @@ function App() {
           </div>
           <div>
             <span>Current page</span>
-            <strong>{pageInfo?.page ?? '...'}</strong>
+            <strong>{currentPage}</strong>
           </div>
           <div>
-            <span>Next page</span>
-            <strong>{pageInfo?.nextPage ? 'Yes' : 'No'}</strong>
+            <span>Total pages</span>
+            <strong>{totalPages || '...'}</strong>
           </div>
         </div>
       </section>
@@ -237,6 +259,22 @@ function App() {
           <div className="notice">No videos were returned by the API.</div>
         )}
       </section>
+
+      <div className="pagination-controls" aria-label="Video page controls">
+        <button type="button" className="pagination-controls__button" onClick={goToPreviousPage} disabled={!canGoPrevious}>
+          Previous page
+        </button>
+        <div className="pagination-controls__status">
+          <span>Page</span>
+          <strong>
+            {currentPage}
+            {totalPages ? ` / ${totalPages}` : ''}
+          </strong>
+        </div>
+        <button type="button" className="pagination-controls__button" onClick={goToNextPage} disabled={!canGoNext}>
+          Next page
+        </button>
+      </div>
 
       <footer className="page-footer">
         <p>Built with React and the FreeAPI public YouTube videos endpoint.</p>
