@@ -1,121 +1,247 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useState } from 'react'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+const API_URL = 'https://api.freeapi.app/api/v1/public/youtube/videos'
+
+function formatCompactNumber(value) {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return '0'
+  }
+
+  return new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(numericValue)
+}
+
+function formatDuration(duration) {
+  const match = duration?.match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/)
+
+  if (!match) {
+    return '0:00'
+  }
+
+  const days = Number(match[1] || 0)
+  const hours = Number(match[2] || 0) + days * 24
+  const minutes = Number(match[3] || 0)
+  const seconds = Number(match[4] || 0)
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  }
+
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+function formatPublishedDate(dateValue) {
+  if (!dateValue) {
+    return 'Recently uploaded'
+  }
+
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date(dateValue))
+}
+
+function pickThumbnail(thumbnails = {}) {
+  return (
+    thumbnails.maxres?.url ||
+    thumbnails.high?.url ||
+    thumbnails.medium?.url ||
+    thumbnails.default?.url ||
+    ''
+  )
+}
+
+function trimText(text, limit) {
+  if (!text) {
+    return 'No description was provided for this video.'
+  }
+
+  const collapsedText = text.replace(/\s+/g, ' ').trim()
+
+  if (collapsedText.length <= limit) {
+    return collapsedText
+  }
+
+  return `${collapsedText.slice(0, limit).trim()}…`
+}
+
+function VideoCard({ video, featured = false }) {
+  const { id, snippet = {}, contentDetails = {}, statistics = {} } = video
+  const videoUrl = `https://www.youtube.com/watch?v=${id}`
+  const thumbnailUrl = pickThumbnail(snippet.thumbnails)
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <article className={`video-card ${featured ? 'video-card--featured' : ''}`}>
+      <a className="video-card__media" href={videoUrl} target="_blank" rel="noreferrer">
+        <img src={thumbnailUrl} alt={snippet.title || 'YouTube video thumbnail'} loading="lazy" />
+        <span className="video-card__duration">{formatDuration(contentDetails.duration)}</span>
+      </a>
+
+      <div className="video-card__body">
+        <div className="video-card__meta">
+          <span>{snippet.channelTitle || 'Unknown channel'}</span>
+          <span>{formatPublishedDate(snippet.publishedAt)}</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+
+        <h3>
+          <a href={videoUrl} target="_blank" rel="noreferrer">
+            {snippet.title || 'Untitled video'}
+          </a>
+        </h3>
+
+        <p>{trimText(snippet.description, featured ? 180 : 120)}</p>
+
+        <div className="video-card__stats">
+          <span>{formatCompactNumber(statistics.viewCount)} views</span>
+          <span>{formatCompactNumber(statistics.likeCount)} likes</span>
+          <span>{formatCompactNumber(statistics.commentCount)} comments</span>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function App() {
+  const [videos, setVideos] = useState([])
+  const [pageInfo, setPageInfo] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function loadVideos() {
+      try {
+        setLoading(true)
+        setError('')
+
+        const response = await fetch(API_URL, { signal: controller.signal })
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`)
+        }
+
+        const result = await response.json()
+        const apiData = result?.data || {}
+        const items = Array.isArray(apiData.data) ? apiData.data : []
+
+        setVideos(items.map((entry) => entry.items).filter(Boolean))
+        setPageInfo(apiData)
+      } catch (fetchError) {
+        if (fetchError.name !== 'AbortError') {
+          setError('Unable to load videos right now. Please try again in a moment.')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadVideos()
+
+    return () => controller.abort()
+  }, [])
+
+  const featuredVideo = videos[0]
+  const queueVideos = videos.slice(1)
+
+  return (
+    <main className="page-shell">
+      <section className="hero-panel">
+        <div className="hero-panel__copy">
+          <p className="eyebrow">FreeAPI / Web Dev Cohort 2026</p>
+          <h1>YouTube-style browsing for the FreeAPI feed.</h1>
+          <p className="hero-panel__summary">
+            A cinematic listing interface built from the public videos endpoint. The layout spotlights
+            thumbnails, publishing details, and quick metrics so the feed reads like a real browsing surface.
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+          <div className="hero-panel__actions">
+            <a href="#videos">Browse videos</a>
+            <a href={API_URL} target="_blank" rel="noreferrer" className="hero-panel__link">
+              Open API source
+            </a>
+          </div>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+
+        <div className="hero-panel__stats">
+          <div>
+            <span>Loaded</span>
+            <strong>{loading ? '...' : formatCompactNumber(videos.length)}</strong>
+          </div>
+          <div>
+            <span>Total items</span>
+            <strong>{pageInfo ? formatCompactNumber(pageInfo.totalItems) : '...'}</strong>
+          </div>
+          <div>
+            <span>Current page</span>
+            <strong>{pageInfo?.page ?? '...'}</strong>
+          </div>
+          <div>
+            <span>Next page</span>
+            <strong>{pageInfo?.nextPage ? 'Yes' : 'No'}</strong>
+          </div>
         </div>
       </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <section id="videos" className="content-area">
+        {error ? <div className="notice notice--error">{error}</div> : null}
+
+        {loading ? (
+          <div className="loading-grid" aria-live="polite" aria-busy="true">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <article className="skeleton-card" key={index}>
+                <div className="skeleton-card__media" />
+                <div className="skeleton-card__body">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : featuredVideo ? (
+          <>
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Spotlight</p>
+                <h2>Featured upload</h2>
+              </div>
+              <p>
+                One large card leads the feed, followed by a responsive grid for the remaining videos.
+              </p>
+            </div>
+
+            <VideoCard video={featuredVideo} featured />
+
+            <div className="section-heading section-heading--compact">
+              <div>
+                <p className="eyebrow">Library</p>
+                <h2>Latest videos</h2>
+              </div>
+              <p>{queueVideos.length} additional videos in the current API page.</p>
+            </div>
+
+            <div className="video-grid">
+              {queueVideos.map((video) => (
+                <VideoCard key={video.id} video={video} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="notice">No videos were returned by the API.</div>
+        )}
+      </section>
+
+      <footer className="page-footer">
+        <p>Built with React and the FreeAPI public YouTube videos endpoint.</p>
+      </footer>
+    </main>
   )
 }
 
