@@ -62,6 +62,8 @@ function App() {
   const [activeView, setActiveView] = useState('login')
   const [registerForm, setRegisterForm] = useState(registerDefaults)
   const [loginForm, setLoginForm] = useState(loginDefaults)
+  const [showLoginPassword, setShowLoginPassword] = useState(false)
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
   const [feedback, setFeedback] = useState({ type: 'idle', message: '' })
   const [isBooting, setIsBooting] = useState(true)
@@ -316,15 +318,29 @@ function App() {
                 </label>
                 <label>
                   Password
-                  <input
-                    autoComplete="current-password"
-                    name="password"
-                    onChange={handleLoginChange}
-                    placeholder="test@123"
-                    required
-                    type="password"
-                    value={loginForm.password}
-                  />
+                  <div className="password-field">
+                    <input
+                      autoComplete="current-password"
+                      name="password"
+                      onChange={handleLoginChange}
+                      placeholder="test@123"
+                      required
+                      type={showLoginPassword ? 'text' : 'password'}
+                      value={loginForm.password}
+                    />
+                    <button
+                      aria-label={
+                        showLoginPassword
+                          ? 'Hide login password'
+                          : 'Show login password'
+                      }
+                      className="password-toggle"
+                      onClick={() => setShowLoginPassword((prev) => !prev)}
+                      type="button"
+                    >
+                      {showLoginPassword ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
                 </label>
                 <button
                   className="action-btn"
@@ -362,15 +378,29 @@ function App() {
                 </label>
                 <label>
                   Password
-                  <input
-                    autoComplete="new-password"
-                    name="password"
-                    onChange={handleRegisterChange}
-                    placeholder="test@123"
-                    required
-                    type="password"
-                    value={registerForm.password}
-                  />
+                  <div className="password-field">
+                    <input
+                      autoComplete="new-password"
+                      name="password"
+                      onChange={handleRegisterChange}
+                      placeholder="test@123"
+                      required
+                      type={showRegisterPassword ? 'text' : 'password'}
+                      value={registerForm.password}
+                    />
+                    <button
+                      aria-label={
+                        showRegisterPassword
+                          ? 'Hide register password'
+                          : 'Show register password'
+                      }
+                      className="password-toggle"
+                      onClick={() => setShowRegisterPassword((prev) => !prev)}
+                      type="button"
+                    >
+                      {showRegisterPassword ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
                 </label>
                 <label>
                   Role
